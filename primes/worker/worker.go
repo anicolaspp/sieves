@@ -1,4 +1,4 @@
-package Worker
+package worker
 
 import (
 	"fmt"
@@ -34,7 +34,7 @@ func Worker(wid int, size int, data *Data) {
 
 		// check if termination signal has been received
 		if next == -1 {
-			data.result <- data.data
+			data.result <- filterInvalid(data.data)  // filter -1 to reduce communication cost
 			return
 		}
 
@@ -74,22 +74,22 @@ func printMsg(wid int, value interface{}) {
 }
 
 //GatherData sends a signal to each Worker so they send their local primes to the corresponding channel
-func GatherData(workers int, chs []chan int, result chan []int) []int {
-	unfiltered := make([]int, 0)
+func GatherData(chs []chan int, result chan []int) []int {
+	primes := make([]int, 0)
 
-	for i := 0; i < workers; i++ {
+	for i := 0; i < len(chs); i++ {
 		// send signal to gather Worker data
 		chs[i] <- -1
 
 		// gather Worker primes
-		unfiltered = append(unfiltered, <-result...)
+		primes = append(primes, <-result...)
 	}
 
-	return filterPrimes(unfiltered)
+	return primes
 }
 
-//filterPrimes removes unnecessary values from the result (-1)
-func filterPrimes(unfiltered []int) []int {
+//filterInvalid removes unnecessary values from the result (-1)
+func filterInvalid(unfiltered []int) []int {
 	primes := make([]int, 0)
 
 	for _, v := range unfiltered {

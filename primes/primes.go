@@ -1,7 +1,7 @@
 package primes
 
 import (
-	"github.com/anicolaspp/sieves/primes/Worker"
+	"github.com/anicolaspp/sieves/primes/worker"
 	"github.com/anicolaspp/sieves/primes/master"
 )
 
@@ -13,7 +13,7 @@ func Primes(number int, workers int) []int {
 
 	master.Master(workers, chs, In)
 
-	primes := Worker.GatherData(workers, chs, result)
+	primes := worker.GatherData(chs, result)
 
 	return primes
 }
@@ -26,8 +26,8 @@ func startWorkers(number int, workers int) ([]chan int, chan int, chan []int) {
 	for i := 0; i < workers; i++ {
 		chs[i] = make(chan int)
 
-		data := Worker.NewData(i, chs[i], In, result)
-		go Worker.Worker(i, number/workers, data)
+		data := worker.NewData(i, chs[i], In, result)
+		go worker.Worker(i, number/workers, data)
 	}
 	return chs, In, result
 }
