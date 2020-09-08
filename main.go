@@ -18,7 +18,11 @@ func main() {
 
 	end := time.Now().Nanosecond() - start.Nanosecond()
 
-	fmt.Println(end)
+	fmt.Println(nanoToSecond(end))
 	fmt.Println(somePrimes)
+}
+
+func nanoToSecond(nano int) float64  {
+	return float64(nano) / 1000000000
 }
 
