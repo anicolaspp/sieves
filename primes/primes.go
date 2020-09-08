@@ -1,9 +1,24 @@
 package primes
 
+import (
+	"github.com/anicolaspp/sieves/primes/Worker"
+	"github.com/anicolaspp/sieves/primes/master"
+)
+
 //Primes calculates the list of prime numbers less or equal to number using some workers
 // It uses sieves of Eratosthenes parallel algorithm
 func Primes(number int, workers int) []int {
 
+	chs, In, result := startWorkers(number, workers)
+
+	master.Master(workers, chs, In)
+
+	primes := Worker.GatherData(workers, chs, result)
+
+	return primes
+}
+
+func startWorkers(number int, workers int) ([]chan int, chan int, chan []int) {
 	chs := make([]chan int, workers)
 	In := make(chan int)
 	result := make(chan []int)
@@ -11,27 +26,9 @@ func Primes(number int, workers int) []int {
 	for i := 0; i < workers; i++ {
 		chs[i] = make(chan int)
 
-		data := &workerData{wid: i, data: []int{}, In: chs[i], out: In, result: result}
-		go worker(i, number/workers, data)
+		data := Worker.NewData(i, chs[i], In, result)
+		go Worker.Worker(i, number/workers, data)
 	}
-
-	master(workers, chs, In)
-
-	unfiltered := gatherWorkersData(workers, chs, result)
-
-	primes := filterPrimes(unfiltered)
-
-	return primes
+	return chs, In, result
 }
 
-//filterPrimes removes unnecessary values from the result (-1)
-func filterPrimes(unfiltered []int) []int {
-	primes := make([]int, 0)
-
-	for _, v := range unfiltered {
-		if v > -1 {
-			primes = append(primes, v)
-		}
-	}
-	return primes
-}
