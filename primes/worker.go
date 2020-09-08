@@ -1,6 +1,9 @@
 package primes
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 //workerData represents the worker dataset and the communication channels
 type workerData struct {
@@ -21,7 +24,7 @@ func worker(wid int, size int, data *workerData) {
 
 	for {
 		printMsg(wid, data.data)
-		// gather next value to be filtered from master
+		// gather next value (to be filtered) from master
 		next := <-data.In
 		printMsg(wid, fmt.Sprintf("Next filter: %v", next))
 
@@ -50,7 +53,7 @@ func worker(wid int, size int, data *workerData) {
 
 		// if there is not next local min, send signal of partition completed
 		if !hastNext {
-			data.out <- -1
+			data.out <- math.MaxInt32
 		}
 	}
 
