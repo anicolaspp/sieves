@@ -33,7 +33,7 @@ func gatherWorkersData(workers int, chs []chan int, result chan []int) []int {
 	unfiltered := make([]int, 0)
 
 	for i := 0; i < workers; i++ {
-		// send signal
+		// send signal to gather worker data
 		chs[i] <- -1
 
 		// gather worker primes
@@ -59,7 +59,7 @@ func runMaster(workers int, chs []chan int, In chan int) {
 	next := 2
 
 	for {
-		sendNextMinToWorkers(workers, chs, next)
+		broadcastMin(workers, chs, next)
 
 		min, hasMin := agreeOnNextMin(workers, In)
 
@@ -73,18 +73,12 @@ func runMaster(workers int, chs []chan int, In chan int) {
 
 //agreeOnNextMin collects the local min of each partition/worker and select to global min
 func agreeOnNextMin(workers int, In chan int) (int, bool) {
-	localMins := make([]int, workers)
-
-	for i := 0; i < workers; i++ {
-		localMins = append(localMins, <-In)
-	}
-
 	min := math.MaxInt32
 
-	for _, v := range localMins {
-		if v < min && v > 1 {
-			min = v
-		}
+	for i := 0; i < workers; i++ {
+		localMin := <-In
+
+		min = _min(min, localMin)
 	}
 
 	if min == math.MaxInt32 {
@@ -94,9 +88,17 @@ func agreeOnNextMin(workers int, In chan int) (int, bool) {
 	return min, true
 }
 
-//sendNextMinToWorkers broadcast the newest selected, global min
-func sendNextMinToWorkers(workers int, chs []chan int, next int) {
+//broadcastMin broadcast the newest selected, global min
+func broadcastMin(workers int, chs []chan int, next int) {
 	for i := 0; i < workers; i++ {
 		chs[i] <- next
 	}
+}
+
+func _min(a, b int) int  {
+	if a <= b {
+		return a
+	}
+
+	return b
 }
