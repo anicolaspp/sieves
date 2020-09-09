@@ -29,6 +29,7 @@ func startWorkers(number int, workers int) ([]chan int, chan int, chan []int) {
 		data := worker.NewData(i, chs[i], In, result)
 		go worker.Worker(i, number/workers, data)
 	}
+
 	return chs, In, result
 }
 
